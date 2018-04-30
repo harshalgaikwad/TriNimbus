@@ -1,0 +1,6 @@
+Created user...
+Sign-in URL: https://trinimbushire.signin.aws.amazon.com/console
+IAM User: harshal-gaikwad
+Temporary Password: Q93lEvzrmn27
+Access Key ID: AKIAIZRCU237ZEVRCDFQ
+Secret key: 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

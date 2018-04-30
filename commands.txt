@@ -1,0 +1,35 @@
+********Configuring SSL*************
+#openssl genrsa 2048 > ca-private-key.pem
+#openssl req -new -x509 -nodes -sha256 -days 365 -key ca-private-key.pem -outform PEM -out ca-certificate.pem
+
+Country Name (2 letter code) [XX]:IN
+State or Province Name (full name) []:MH
+Locality Name (eg, city) [Default City]:MUM
+Organization Name (eg, company) [Default Company Ltd]:TN
+Organizational Unit Name (eg, section) []:IT
+Common Name (eg, your name or your server's hostname) []:Webapp
+Email Address []:harshalgaikwad.work@gmail.com
+
+*******Uploading SSL to IAM*************
+
+#aws iam uploadservercertificate --server-certificate-name MyCertificate --certificate-body file://ca-certificate.pem --private-key file://ca-private-key.pem
+#aws iam list-server-certificates --server-certificate-name MyCertificate
+{
+    "ServerCertificateMetadata": {
+        "ServerCertificateId": "ASCAJAJYYCVAPBMRRRWMK",
+        "ServerCertificateName": "MyCertificate",
+        "Expiration": "2019-04-28T10:25:46Z",
+        "Path": "/",
+        "Arn": "arn:aws:iam::256230767840:server-certificate/MyCertificate",
+        "UploadDate": "2018-04-28T10:56:43.871Z"
+    }
+}
+
+*********Creating Healthcheck for ELB**********
+#cd /var/www/html
+# ls
+index.php
+# nano healthcheck.html **(added text- I am healthy)**
+# ls
+healthcheck.html  index.php
+
