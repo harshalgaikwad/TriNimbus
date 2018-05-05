@@ -1,0 +1,10 @@
+//Script used while EC2 creation
+
+#!/bin/bash
+yum update -y
+yum install httpd php php-mysql -y
+yum install -y mod_ssl
+yum install openssl
+service httpd start
+chkconfig httpd on
+echo "<?php phpinfo();?>" > /var/www/html/index.php

@@ -1,0 +1,179 @@
+***********************************************************************************************************************
+All commands used during the implementation
+
+*******************************Configuring SSL************************************************************************
+
+[root@ip-172-31-17-222 ~]# openssl genrsa 2048 > ca-private-key.pem
+Generating RSA private key, 2048 bit long modulus
+........................................................................................................................................................................................................................+++
+.....+++
+e is 65537 (0x10001)
+
+#[root@ip-172-31-17-222 ~]# openssl req -new -x509 -nodes -sha256 -days 365 -key ca-private-key.pem -outform PEM -out ca-certificate.pem
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [XX]:CA
+State or Province Name (full name) []:ON
+Locality Name (eg, city) [Default City]:Toronto
+Organization Name (eg, company) [Default Company Ltd]:Trinimbus Assignment
+Organizational Unit Name (eg, section) []:AWS
+Common Name (eg, your name or your server's hostname) []:*.amazonaws.com
+Email Address []:harshal.gaikwad@outlook.com
+
+[root@ip-172-31-17-222 ~]# ls
+ca-certificate.pem  ca-private-key.pem
+
+
+*******************************Uploading SSL to IAM****************************************************
+
+[root@ip-172-31-17-222 ~]# aws configure
+AWS Access Key ID [None]: AKIAIZRCU237ZEVRCDFQ
+AWS Secret Access Key [None]: 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
+Default region name [None]: us-west-2
+Default output format [None]: json
+
+[root@ip-172-31-17-222 ~]# aws iam upload-server-certificate --server-certificate-name HGCertificate --certificate-body file://ca-certificate.pem --private-key file://ca-private-key.pem
+{
+    "ServerCertificateMetadata": {
+        "ServerCertificateId": "ASCAIMCGO3SHABIQS6TSA",
+        "ServerCertificateName": "HGCertificate",
+        "Expiration": "2019-05-02T17:10:46Z",
+        "Path": "/",
+        "Arn": "arn:aws:iam::272462672480:server-certificate/HGCertificate",
+        "UploadDate": "2018-05-02T17:23:38.870Z"
+    }
+}
+
+
+*****************************Creating Healthcheck for ELB*********************************************
+[root@ip-172-31-17-222 html]# ls
+index.php
+
+[root@ip-172-31-17-222 html]# nano healthcheck.html **(added text- I am healthy)**
+
+[root@ip-172-31-17-222 html]# ls
+healthcheck.html  index.php
+
+
+*****************************Connecting to the database and creating table *******************************************
+
+[root@ip-172-31-17-222 /]# mysql -h hgdbinstance.ccmonfdvzpe4.us-west-2.rds.amazonaws.com -P 3306 -u hgsqluser -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 265
+Server version: 5.6.39-log MySQL Community Server (GPL)
+
+Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| hgbooks            |
+| innodb             |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+6 rows in set (0.01 sec)
+
+mysql> use hgbooks
+Database changed
+
+mysql> show tables;
+Empty set (0.00 sec)
+
+mysql> create TABLE Books(
+    -> Title VARCHAR(40) NOT NULL,
+    -> Author VARCHAR(40) NOT NULL,
+    -> Price INT NOT NULL,
+    -> Language VARCHAR(40) DEFAULT "English");
+Query OK, 0 rows affected (0.12 sec)
+
+mysql> DESC Books;
++----------+-------------+------+-----+---------+-------+
+| Field    | Type        | Null | Key | Default | Extra |
++----------+-------------+------+-----+---------+-------+
+| Title    | varchar(40) | NO   |     | NULL    |       |
+| Author   | varchar(40) | NO   |     | NULL    |       |
+| Price    | int(11)     | NO   |     | NULL    |       |
+| Language | varchar(40) | YES  |     | English |       |
++----------+-------------+------+-----+---------+-------+
+4 rows in set (0.01 sec)
+
+mysql> INSERT INTO Books VALUE("Around the World", "John D", 50.00, "English");
+Query OK, 1 row affected (0.01 sec)
+
+mysql> SELECT * FROM Books;
++------------------+--------+-------+----------+
+| Title            | Author | Price | Language |
++------------------+--------+-------+----------+
+| Around the World | John D |    50 | English  |
++------------------+--------+-------+----------+
+1 row in set (0.00 sec)
+
+
+mysql> alter table Books add Bookid INT NOT NULL PRIMARY KEY;
+Query OK, 0 rows affected (0.33 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> desc Books;
++----------+-------------+------+-----+---------+-------+
+| Field    | Type        | Null | Key | Default | Extra |
++----------+-------------+------+-----+---------+-------+
+| Title    | varchar(40) | NO   |     | NULL    |       |
+| Author   | varchar(40) | NO   |     | NULL    |       |
+| Price    | int(11)     | NO   |     | NULL    |       |
+| Language | varchar(40) | YES  |     | English |       |
+| Bookid   | int(11)     | NO   | PRI | NULL    |       |
++----------+-------------+------+-----+---------+-------+
+
+mysql> insert into Books values ('In Search of Lost Time','Marcel Proust',60,'English',002);
+Query OK, 1 row affected (0.01 sec)
+
+mysql> insert into Books values ('Ulysses','James Joyce', 40,'English',003);
+Query OK, 1 row affected (0.01 sec)
+
+mysql> insert into Books values ('Hamlet','Shakespeare',80,'English',004);
+Query OK, 1 row affected (0.01 sec)
+
+mysql> insert into Books values ('War and Peace','Leo Tolstoy', 100,'English',005);
+Query OK, 1 row affected (0.01 sec)
+
+mysql> Update Books SET Bookid=001 WHERE Price=50;
+Query OK, 1 row affected (0.02 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from Books
+    -> ;
++------------------------+---------------+-------+----------+--------+
+| Title                  | Author        | Price | Language | Bookid |
++------------------------+---------------+-------+----------+--------+
+| Around the World       | John D        |    50 | English  |      1 |
+| In Search of Lost Time | Marcel Proust |    60 | English  |      2 |
+| Ulysses                | James Joyce   |    40 | English  |      3 |
+| Hamlet                 | Shakespeare   |    80 | English  |      4 |
+| War and Peace          | Leo Tolstoy   |   100 | English  |      5 |
++------------------------+---------------+-------+----------+--------+
+5 rows in set (0.00 sec)
+
+
+*********************************************Mouting EFS on EC2-1*********************************************************
+
+[root@ip-172-31-17-222 html]# sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 fs-498c15e0.efs.us-west-2.amazonaws.com:/ /var/www/html
+
+
+
+
