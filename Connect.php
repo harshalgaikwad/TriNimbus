@@ -1,4 +1,5 @@
 <?php
+
 $username = "hgsqluser";
 $password = "hgsqluser";
 $hostname = "hgdbinstance.ccmonfdvzpe4.us-west-2.rds.amazonaws.com:3306";
